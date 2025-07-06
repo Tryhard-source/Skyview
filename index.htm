@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Skyview</title>
+  <link rel="icon" href="assets/ase.ico" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Fonts -->
+  <style>
+    * {
+      user-select: none;
+    }
+
+    @font-face {
+      font-family: 'PixelSquare';
+      src: url('pixel_square/Pixel Square 10.ttf') format('truetype');
+    }
+
+    @font-face {
+      font-family: 'PixelSquare';
+      src: url('pixel_square/Pixel Square Bold10.ttf') format('truetype');
+      font-weight: bold;
+    }
+  </style>
+
+  <!-- Styles -->
+  <style>
+    body {
+      margin: 0;
+      font-family: 'PixelSquare', sans-serif;
+      color: #fff;
+      background-image: url(pixel.jpg);
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    canvas {
+      border: 2px solid black;
+      background-color: lightgreen;
+      display: block;
+      margin: auto;
+    }
+
+    .controls,
+    .cords,
+    .interaction,
+    .back {
+      position: absolute;
+      z-index: 10;
+    }
+
+    .controls {
+      width: 38%;
+      right: -13%;
+      top: 20px;
+      font-size: 21px;
+    }
+
+    .cords {
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+    }
+
+    .interaction {
+      left: 37.5%;
+      width: 38%;
+      bottom: 12%;
+      font-size: 30px;
+      position: absolute;
+    }
+
+    .interaction.none {
+      display: none !important;
+    }
+
+    .back {
+      top: 20px;
+      left: 20px;
+      font-size: 60px;
+      cursor: pointer;
+    }
+
+    /* Inventory Styles */
+    #inventory {
+      display: none;
+      position: fixed;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3c3c3c;
+      border: 3px solid #999;
+      padding: 12px;
+      box-sizing: border-box;
+      width: calc(9 * 54px + 62px);
+      z-index: 100;
+    }
+
+    #main-inventory,
+    #hotbar {
+      display: grid;
+      grid-template-columns: repeat(9, 54px);
+      grid-gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .slot {
+      width: 54px;
+      height: 54px;
+      background: #666;
+      border: 2px solid #999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .slot:hover {
+      border-color: #fff;
+    }
+
+    .slot img {
+      max-width: 44px;
+      max-height: 44px;
+      pointer-events: none;
+    }
+
+    .count {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: rgba(0, 0, 0, 0.7);
+      font-size: 14px;
+      color: white;
+      padding: 1px 5px;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    #cursorItem {
+      position: fixed;
+      pointer-events: none;
+      width: 44px;
+      height: 44px;
+      display: none;
+      z-index: 200;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- UI Elements -->
+  <div class="controls">
+    <h2>Controls</h2>
+    <div>Move: W / A / S / D or Arrows</div>
+    <div>Sprint: Shift</div>
+    <div>Toggle Inventory: E</div>
+  </div>
+
+  <div class="cords"></div>
+  <div class="interaction none">[Press R to Interact]</div>
+
+  <a href="entrypoint.html">
+    <div class="back"><img src="assets/arrow.svg" style="width: auto; height: 90px; filter: invert(1);"></div>
+  </a>
+
+  <!-- Game Canvas -->
+  <canvas id="gameCanvas" width="720" height="720"></canvas>
+
+  <!-- Inventory UI -->
+  <div id="inventory">
+    <div id="main-inventory"></div>
+    <div id="hotbar"></div>
+  </div>
+  <img id="cursorItem" src="" alt="held item" />
+
+  <!-- Script -->
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const inventory = document.getElementById('inventory');
+    const mainInvContainer = document.getElementById('main-inventory');
+    const hotbarContainer = document.getElementById('hotbar');
+    const cursorItem = document.getElementById('cursorItem');
+    let nearChest = false;
+
+    // Inventory logic
+    let items = new Array(45).fill(null);
+    items[0] = { name: 'Wood', sprite: 'assets/oakLog.png', count: 64 };
+    items[10] = { name: 'Stone', sprite: 'assets/stone.png', count: 32 };
+    items[36] = { name: 'Apple', sprite: 'assets/apple.png', count: 5 };
+    items[44] = { name: 'Torch', sprite: 'assets/torch.png', count: 15 };
+
+    let heldItem = null;
+    let heldCount = 0;
+
+    function renderSlots(container, startIdx, count) {
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const slotIndex = startIdx + i;
+        const item = items[slotIndex];
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+
+        if (item) {
+          slot.innerHTML = `
+          <img src="${item.sprite}" alt="${item.name}" />
+          <div class="count">${item.count}</div>
+        `;
+        }
+
+        slot.addEventListener('click', () => {
+          if (!heldItem && item) {
+            heldItem = item;
+            heldCount = item.count;
+            items[slotIndex] = null;
+          } else if (heldItem) {
+            if (!item) {
+              items[slotIndex] = { ...heldItem };
+              heldItem = null;
+              heldCount = 0;
+            } else {
+              [items[slotIndex], heldItem] = [heldItem, item];
+              heldCount = heldItem.count;
+            }
+          }
+          renderInventory();
+          updateCursorItem();
+        });
+
+        container.appendChild(slot);
+      }
+    }
+
+    function renderInventory() {
+      renderSlots(mainInvContainer, 0, 27);
+      renderSlots(hotbarContainer, 36, 9);
+    }
+
+    function updateCursorItem() {
+      if (heldItem) {
+        cursorItem.src = heldItem.sprite;
+        cursorItem.style.display = 'block';
+      } else {
+        cursorItem.style.display = 'none';
+      }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      if (heldItem) {
+        cursorItem.style.left = e.pageX - 15 + 'px';
+        cursorItem.style.top = e.pageY - 15 + 'px';
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+
+      if (key === 'r' && nearChest) {
+        // Toggle inventory ONLY when near a chest
+        inventory.style.display = inventory.style.display === 'none' ? 'block' : 'none';
+      }
+
+      if (key === 'escape' && inventory.style.display === 'block') {
+        // Allow closing inventory with Esc
+        inventory.style.display = 'none';
+      }
+    });
+
+
+    renderInventory();
+
+    // Game logic
+    const player = {
+      x: 20, y: 20, width: 60, height: 60, speed: 5, sprite: true,
+    };
+
+    const obstacles = [
+      { x: 200, y: 300, height: 50, width: 75, useImage: true, source: "assets/brick.png" }
+    ];
+
+    const chests = [
+      { x: 400, y: 200, height: 50, width: 50, useImage: true, source: "assets/chest.png" }
+    ];
+
+    const keys = {};
+    const sprite = new Image(); sprite.src = 'assets/sprite.png';
+    obstacles.forEach(o => o.image = new Image());
+    chests.forEach(c => c.image = new Image());
+
+    obstacles.forEach((o, i) => o.image.src = o.source);
+    chests.forEach((c, i) => c.image.src = c.source);
+
+    window.addEventListener('keydown', (e) => { keys[e.key] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+    function drawGridBackground() {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= canvas.width; x += 120) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += 120) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+    }
+
+    function rectsOverlap(r1, r2) {
+      return !(r1.x + r1.width <= r2.x ||
+        r1.x >= r2.x + r2.width ||
+        r1.y + r1.height <= r2.y ||
+        r1.y >= r2.y + r2.height);
+    }
+
+    function update() {
+      let prevX = player.x, prevY = player.y;
+      if (keys['w'] || keys['arrowup']) player.y -= player.speed;
+      if (keys['a'] || keys['arrowleft']) player.x -= player.speed;
+      if (keys['s'] || keys['arrowdown']) player.y += player.speed;
+      if (keys['d'] || keys['arrowright']) player.x += player.speed;
+
+      if (keys['Shift']) player.speed = 8; else player.speed = 5;
+
+      if (player.x < 0) player.x = 0;
+      if (player.y < 0) player.y = 0;
+      if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+      if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
+
+      for (const obs of obstacles) if (rectsOverlap(player, obs)) { player.x = prevX; player.y = prevY; }
+      for (const chest of chests) if (rectsOverlap(player, chest)) { player.x = prevX; player.y = prevY; }
+
+      document.querySelector(".cords").innerText = `(${player.x}, ${player.y})`;
+
+      let wasNear = nearChest;
+      nearChest = false;
+
+      for (const chest of chests) {
+        const dx = (chest.x + chest.width / 2) - (player.x + player.width / 2);
+        const dy = (chest.y + chest.height / 2) - (player.y + player.height / 2);
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= 100) {
+          nearChest = true;
+          if (!wasNear) document.querySelector(".interaction").classList.remove("none");
+        }
+      }
+
+      if (!nearChest && wasNear) document.querySelector(".interaction").classList.add("none");
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGridBackground();
+
+      obstacles.forEach(o => {
+        if (o.image && o.image.complete) ctx.drawImage(o.image, o.x, o.y, o.width, o.height);
+        else { ctx.fillStyle = "brown"; ctx.fillRect(o.x, o.y, o.width, o.height); }
+      });
+
+      chests.forEach(c => {
+        if (c.image && c.image.complete) ctx.drawImage(c.image, c.x, c.y, c.width, c.height);
+        else { ctx.fillStyle = "gold"; ctx.fillRect(c.x, c.y, c.width, c.height); }
+      });
+
+      if (sprite.complete) ctx.drawImage(sprite, player.x, player.y, player.width, player.height);
+      else { ctx.fillStyle = 'red'; ctx.fillRect(player.x, player.y, player.width, player.height); }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+
+</body>
+
+</html>
