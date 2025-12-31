@@ -188,6 +188,20 @@
     const hotbarContainer = document.getElementById('hotbar');
     const cursorItem = document.getElementById('cursorItem');
     let nearChest = false;
+    document.addEventListener("DOMContentLoaded", () => {
+    const cords = document.querySelector(".cords"); // exists here
+    const value1 = document.querySelector(".value1"); // optional if settings are available in-game
+
+    let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
+
+    function updateCordsDisplay() {
+        if (cords) {
+            cords.style.display = cordsdisplaysetting === "Enable" ? "block" : "none";
+        }
+    }
+
+    updateCordsDisplay();
+});
 
     // Inventory logic
     let items = new Array(45).fill(null);
