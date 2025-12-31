@@ -1,45 +1,43 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const settings = document.querySelector(".settings");
+    const settingsMenu = document.querySelector(".settingsmenu");
+    const closeBtn = document.querySelector(".close");
+    const value1 = document.querySelector(".value1");
+    const cordsDiv = document.querySelector(".cords");
 
-document.addEventListener("DOMContentLoaded" , ()=>{
-const settings = document.querySelector(".settings")
+    // Toggle settings menu
+    settings.addEventListener("click", () => {
+        settingsMenu.classList.toggle("none");
+    });
 
-settings.addEventListener("click", () => {
-    document.querySelector(".settingsmenu").classList.toggle("none")
-})
+    closeBtn.addEventListener("click", () => {
+        settingsMenu.classList.toggle("none");
+    });
 
+    // Load saved state from localStorage
+    let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
 
-document.querySelector(".close").addEventListener("click" , () => {
-    document.querySelector(".settingsmenu").classList.toggle("none")
-})
-const value1 = document.querySelector(".value1")
-let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
-
-if (cordsdisplaysetting === "Disable") {
-    value1.innerHTML = "Disable";
-} else {
-    value1.innerHTML = "Enable";
-}
-
-if (cordsdisplaysetting === "Enable") {
-    console.log("Cords are enabled");
-} else {
-    console.log("Cords are disabled");
-}
-
-// Event listener for clicks on the button
-value1.addEventListener("click", () => {
-    if (cordsdisplaysetting === "Disable") {
+    // Set initial state
+    if (cordsdisplaysetting === "Enable") {
         value1.innerHTML = "Enable";
-        cordsdisplaysetting = "Enable";
-        localStorage.setItem("cordsdisplaysetting", cordsdisplaysetting);
-
-        // Show cords
-        console.log("Cords are enabled");
+        cordsDiv.style.display = "block";
     } else {
         value1.innerHTML = "Disable";
-        cordsdisplaysetting = "Disable";
-        localStorage.setItem("cordsdisplaysetting", cordsdisplaysetting);
-
-        console.log("Cords are disabled");
+        cordsDiv.style.display = "none";
     }
+
+    // Click listener to toggle coords display
+    value1.addEventListener("click", () => {
+        if (cordsdisplaysetting === "Disable") {
+            value1.innerHTML = "Enable";
+            cordsdisplaysetting = "Enable";
+            cordsDiv.style.display = "block"; // show coords
+        } else {
+            value1.innerHTML = "Disable";
+            cordsdisplaysetting = "Disable";
+            cordsDiv.style.display = "none"; // hide coords
+        }
+
+        localStorage.setItem("cordsdisplaysetting", cordsdisplaysetting);
+    });
 });
-})
