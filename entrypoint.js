@@ -1,24 +1,46 @@
+// JavaScript
 document.addEventListener("DOMContentLoaded", () => {
+    const settings = document.querySelector(".settings");
+    const settingsMenu = document.querySelector(".settingsmenu");
+    const closeBtn = document.querySelector(".close");
     const value1 = document.querySelector(".value1");
-    const cordsDiv = document.querySelector(".cords");
+    const cords = document.querySelector(".cords");
 
-    // Make sure the elements exist
-    if (!value1 || !cordsDiv) return;
+    // Show/hide settings menu
+    settings.addEventListener("click", () => {
+        settingsMenu.classList.toggle("none");
+    });
 
-    // Load previous setting or default
+    closeBtn.addEventListener("click", () => {
+        settingsMenu.classList.toggle("none");
+    });
+
+    // Load setting from localStorage
     let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
 
-    // Set the button text
-    value1.innerHTML = cordsdisplaysetting;
+    function updateCordsDisplay() {
+        if (cordsdisplaysetting === "Enable") {
+            cords.style.display = "block";
+            value1.innerHTML = "Enable";
+            console.log("Cords are enabled");
+        } else {
+            cords.style.display = "none";
+            value1.innerHTML = "Disable";
+            console.log("Cords are disabled");
+        }
+    }
 
-    // Show/hide coords div based on stored value
-    cordsDiv.style.display = cordsdisplaysetting === "Enable" ? "block" : "none";
+    // Initial display
+    updateCordsDisplay();
 
-    // Toggle logic (exactly like before)
+    // Toggle setting when button clicked
     value1.addEventListener("click", () => {
-        cordsdisplaysetting = cordsdisplaysetting === "Enable" ? "Disable" : "Enable";
-        value1.innerHTML = cordsdisplaysetting;
-        cordsDiv.style.display = cordsdisplaysetting === "Enable" ? "block" : "none";
+        if (cordsdisplaysetting === "Disable") {
+            cordsdisplaysetting = "Enable";
+        } else {
+            cordsdisplaysetting = "Disable";
+        }
         localStorage.setItem("cordsdisplaysetting", cordsdisplaysetting);
+        updateCordsDisplay();
     });
 });
