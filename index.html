@@ -275,7 +275,33 @@
 
     openBtn.onclick = () => overlay.classList.remove("none");
     closeBtn.onclick = () => overlay.classList.add("none");
+
+    // Fullscreen toggle
+    const fullscreenToggle = document.querySelectorAll(".setting-row")[1].querySelector("input"); // second row = fullscreen
+
+    fullscreenToggle.addEventListener("change", () => {
+        if (fullscreenToggle.checked) {
+            // Enter fullscreen
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                    fullscreenToggle.checked = false; // reset if error
+                });
+            }
+        } else {
+            // Exit fullscreen
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        }
+    });
+
+    // Sync checkbox if user exits fullscreen with ESC
+    document.addEventListener("fullscreenchange", () => {
+        fullscreenToggle.checked = !!document.fullscreenElement;
+    });
 </script>
+
 
 
 </html>
