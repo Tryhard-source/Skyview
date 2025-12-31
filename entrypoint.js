@@ -3,10 +3,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Load previous state from localStorage
     const savedCordsSetting = localStorage.getItem("cordsdisplaysetting");
+
     if (savedCordsSetting === "Enable") {
         cordsToggle.checked = true; // ON
     } else if (savedCordsSetting === "Disable") {
         cordsToggle.checked = false; // OFF
+    } else {
+        // Default to ON if nothing saved
+        cordsToggle.checked = true;
     }
 
     // Listen for slider changes
