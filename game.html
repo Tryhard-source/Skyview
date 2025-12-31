@@ -189,18 +189,16 @@
     const cursorItem = document.getElementById('cursorItem');
     let nearChest = false;
     document.addEventListener("DOMContentLoaded", () => {
-    const cords = document.querySelector(".cords"); // exists here
-    const value1 = document.querySelector(".value1"); // optional if settings are available in-game
+    const cords = document.querySelector(".cords"); // element showing coords
+    if (!cords) return; // safety check
 
+    // Read saved setting
     let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
 
-    function updateCordsDisplay() {
-        if (cords) {
-            cords.style.display = cordsdisplaysetting === "Enable" ? "block" : "none";
-        }
-    }
+    // Apply setting
+    cords.style.display = cordsdisplaysetting === "Enable" ? "block" : "none";
 
-    updateCordsDisplay();
+    console.log(`Cords are ${cordsdisplaysetting.toLowerCase()}`);
 });
 
     // Inventory logic
