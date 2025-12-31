@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const cordsToggle = document.getElementById("cordsToggle");
+    const cordsToggle = document.querySelector(".checkBox");
 
     // Load previous state from localStorage
     const savedCordsSetting = localStorage.getItem("cordsdisplaysetting");
