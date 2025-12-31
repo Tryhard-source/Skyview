@@ -1,16 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const cordsToggle = document.getElementById("cordsToggle");
 
-    // Load current setting from localStorage
-    let cordsdisplaysetting = localStorage.getItem("cordsdisplaysetting") || "Enable";
+    // Load previous state from localStorage
+    const savedCordsSetting = localStorage.getItem("cordsdisplaysetting");
+    if (savedCordsSetting === "Enable") {
+        cordsToggle.checked = true; // ON
+    } else if (savedCordsSetting === "Disable") {
+        cordsToggle.checked = false; // OFF
+    }
 
-    // Update button text
-    value1.innerHTML = cordsdisplaysetting;
-
-    // Toggle button click
-    value1.addEventListener("click", () => {
-        cordsdisplaysetting = cordsdisplaysetting === "Enable" ? "Disable" : "Enable";
-        localStorage.setItem("cordsdisplaysetting", cordsdisplaysetting);
-        value1.innerHTML = cordsdisplaysetting;
-        console.log(`Cords display set to ${cordsdisplaysetting}`);
+    // Listen for slider changes
+    cordsToggle.addEventListener("change", () => {
+        const current = cordsToggle.checked ? "Enable" : "Disable";
+        localStorage.setItem("cordsdisplaysetting", current);
+        console.log(`Cords display set to ${current}`);
     });
 });
