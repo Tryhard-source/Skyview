@@ -3,14 +3,14 @@
 
 <head>
     <link rel="icon" href="assets/ase.ico" type="image/x-icon">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2D Game</title>
     <style>
-        *{
+        * {
             overflow: hidden;
         }
+
         .settingsmenu {
             width: 420px;
             max-height: 80%;
@@ -35,7 +35,6 @@
             align-items: center;
             z-index: 999;
         }
-
 
         @keyframes pop {
             from {
@@ -80,7 +79,6 @@
             font-size: 22px;
         }
 
-        /* Toggle Switch */
         .toggle {
             position: relative;
             width: 50px;
@@ -215,11 +213,61 @@
             border-radius: 14px;
             font-size: 25px;
         }
+
+        /* Loading Screen Styles */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: #0e0e0e;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-screen {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .element {
+            background: #267fcf;
+            width: 20px;
+            height: 20px;
+            transition: transform 650ms ease-in-out;
+            position: absolute;
+        }
+
+        .p0 {
+            transform: translate(0, 0);
+        }
+
+        .p1 {
+            transform: translate(30px, 0);
+        }
+
+        .p2 {
+            transform: translate(30px, 30px);
+        }
+
+        .p3 {
+            transform: translate(0, 30px);
+        }
+
+        .loading-text {
+            height: 50px;
+            padding: 20px;
+            font-size: 30px;
+            color: #6fa6d6;
+            font-family: 'PixelSquare';
+        }
     </style>
 </head>
 
 <body>
-    <div class="play btn"><a href="game.html">PLAY</a></div>
+    <div class="play btn" id="playBtn"><a href="#">PLAY</a></div>
     <div class="credit btn"><a href="credits.html">CREDITS</a></div>
     <div class="settings btn" id="openSettings">SETTINGS</div>
 
@@ -266,9 +314,21 @@
         </div>
     </div>
 
+    <!-- Loading overlay (hidden initially) -->
+    <div class="loading-overlay none" id="loadingOverlay">
+        <div class="loading-screen">
+            <div class="element element-1 p0"></div>
+            <div class="element element-2 p1"></div>
+            <div class="element element-3 p2"></div>
+            <div class="element element-4 p3"></div>
+        </div>
+        <span class="loading-text">LOADING</span>
+    </div>
+
 </body>
 <script src="entrypoint.js"></script>
 <script>
+    // Menu settings
     const openBtn = document.getElementById("openSettings");
     const closeBtn = document.getElementById("closeSettings");
     const overlay = document.getElementById("settingsOverlay");
@@ -276,32 +336,86 @@
     openBtn.onclick = () => overlay.classList.remove("none");
     closeBtn.onclick = () => overlay.classList.add("none");
 
-    // Fullscreen toggle
     const fullscreenToggle = document.querySelectorAll(".setting-row")[1].querySelector("input"); // second row = fullscreen
 
     fullscreenToggle.addEventListener("change", () => {
         if (fullscreenToggle.checked) {
-            // Enter fullscreen
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch((err) => {
                     console.log(`Error attempting to enable fullscreen: ${err.message}`);
-                    fullscreenToggle.checked = false; // reset if error
+                    fullscreenToggle.checked = false;
                 });
             }
         } else {
-            // Exit fullscreen
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
         }
     });
 
-    // Sync checkbox if user exits fullscreen with ESC
     document.addEventListener("fullscreenchange", () => {
         fullscreenToggle.checked = !!document.fullscreenElement;
     });
+
+    // Loading screen animation
+    const elements = document.querySelectorAll(".element")
+    let step = 0
+    setInterval(() => {
+        elements.forEach((el, i) => {
+            el.className = `element element-${i + 1} p${(i + step) % 4}`
+        })
+        step++
+    }, 750)
+
+    // Play button with session-based loading screen
+    const playBtn = document.getElementById('playBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // List of assets to preload
+    const gameAssets = [
+        'player.png',
+        'chest.png',
+        'obstacle.png',
+        'grid.png'
+        // add all other game assets here
+    ];
+
+    function preloadAssets(assets) {
+        return Promise.all(assets.map(src => {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.src = src;
+                img.onload = img.onerror = resolve;
+            });
+        }));
+    }
+
+    playBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        // Check if loading screen already shown in this session
+        if (!sessionStorage.getItem('loadingShown')) {
+            sessionStorage.setItem('loadingShown', 'true');
+
+            loadingOverlay.classList.remove('none');
+
+            const startTime = Date.now();
+
+            // Preload assets
+            await preloadAssets(gameAssets);
+
+            // Ensure at least 2.5 seconds
+            const elapsed = Date.now() - startTime;
+            const wait = Math.max(2500 - elapsed, 0);
+            setTimeout(() => {
+                loadingOverlay.classList.add('none');
+                window.location.href = 'game.html';
+            }, wait);
+        } else {
+            // If already shown this session, go straight to game
+            window.location.href = 'game.html';
+        }
+    });
 </script>
-
-
 
 </html>
