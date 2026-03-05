@@ -1,4 +1,4 @@
-## This project is all about learning basic 2D Game development in javascript and having fun, and improving this game everyday!
+## This project is all about learning basic 2D Gave development in javascript and having fun, and improving this game everyday!
 
 # 2D Pixel Game
 
